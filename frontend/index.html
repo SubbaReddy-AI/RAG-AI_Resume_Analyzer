@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Resume RAG Assistant</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Background decoration -->
+    <div class="background">
+        <div class="blob blob-one"></div>
+        <div class="blob blob-two"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Main container -->
+    <main class="app-container">
+
+        <!-- Header -->
+        <header class="hero">
+
+            <div class="badge">
+                ✨ AI-Powered Career Assistant
+            </div>
+
+            <h1>
+                AI Resume
+                <span>RAG Assistant</span>
+            </h1>
+
+            <p>
+                Upload your resume, get an AI-powered analysis,
+                and ask questions about your skills, projects,
+                education, and experience.
+            </p>
+
+            <!-- API Status -->
+            <div class="api-status">
+                <span
+                    id="status-dot"
+                    class="status-dot">
+                </span>
+
+                <span id="api-status">
+                    Checking API connection...
+                </span>
+            </div>
+
+        </header>
+
+
+        <!-- Dashboard -->
+        <section class="dashboard">
+
+            <!-- =============================== -->
+            <!-- LEFT SIDE - RESUME UPLOAD -->
+            <!-- =============================== -->
+
+            <div class="card upload-card">
+
+                <div class="card-header">
+
+                    <div class="icon-box">
+                        📄
+                    </div>
+
+                    <div>
+                        <h2>Upload Resume</h2>
+
+                        <p>
+                            Upload your PDF resume for AI analysis
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- Drop Zone -->
+                <div
+                    id="drop-zone"
+                    class="drop-zone">
+
+                    <div class="upload-icon">
+                        ☁️
+                    </div>
+
+                    <h3>
+                        Drop your resume here
+                    </h3>
+
+                    <p>
+                        or click to browse
+                    </p>
+
+                    <span>
+                        PDF files only
+                    </span>
+
+                    <input
+                        type="file"
+                        id="resume-file"
+                        accept=".pdf"
+                        hidden
+                    >
+
+                </div>
+
+
+                <!-- Selected File -->
+                <div
+                    id="file-info"
+                    class="file-info hidden">
+
+                    <span class="file-icon">
+                        📄
+                    </span>
+
+                    <div class="file-details">
+
+                        <strong id="file-name">
+                            resume.pdf
+                        </strong>
+
+                        <small id="file-size">
+                            0 KB
+                        </small>
+
+                    </div>
+
+                    <button
+                        id="remove-file"
+                        class="remove-button">
+                        ×
+                    </button>
+
+                </div>
+
+
+                <!-- Upload Button -->
+                <button
+                    id="upload-button"
+                    class="primary-button"
+                    disabled>
+
+                    <span>
+                        Analyze Resume
+                    </span>
+
+                    <span>
+                        →
+                    </span>
+
+                </button>
+
+
+                <!-- Upload Message -->
+                <div
+                    id="upload-message"
+                    class="message hidden">
+                </div>
+
+            </div>
+
+
+            <!-- =============================== -->
+            <!-- RIGHT SIDE - AI ANALYSIS -->
+            <!-- =============================== -->
+
+            <div class="card analysis-card">
+
+                <div class="card-header">
+
+                    <div class="icon-box">
+                        ✨
+                    </div>
+
+                    <div>
+                        <h2>AI Resume Analysis</h2>
+
+                        <p>
+                            Your personalized resume insights
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- Empty State -->
+                <div
+                    id="analysis-empty"
+                    class="empty-state">
+
+                    <div class="empty-icon">
+                        🧠
+                    </div>
+
+                    <h3>
+                        Ready to analyze
+                    </h3>
+
+                    <p>
+                        Upload your resume and your AI analysis
+                        will appear here.
+                    </p>
+
+                </div>
+
+
+                <!-- Loading -->
+                <div
+                    id="analysis-loading"
+                    class="loading-state hidden">
+
+                    <div class="loader"></div>
+
+                    <h3>
+                        Analyzing your resume...
+                    </h3>
+
+                    <p>
+                        AI is reading your skills, projects
+                        and experience.
+                    </p>
+
+                </div>
+
+
+                <!-- Result -->
+                <div
+                    id="analysis-result"
+                    class="analysis-result hidden">
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =============================== -->
+        <!-- CHAT SECTION -->
+        <!-- =============================== -->
+
+        <section
+            id="chat-section"
+            class="card chat-section">
+
+            <div class="chat-header">
+
+                <div class="card-header">
+
+                    <div class="icon-box">
+                        💬
+                    </div>
+
+                    <div>
+                        <h2>Chat With Your Resume</h2>
+
+                        <p>
+                            Ask AI anything about your resume
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Chat Messages -->
+            <div
+                id="chat-messages"
+                class="chat-messages">
+
+                <div class="ai-message chat-message">
+
+                    <div class="message-avatar">
+                        AI
+                    </div>
+
+                    <div class="message-content">
+
+                        <p>
+                            Hello! Upload your resume first.
+                            Then you can ask me questions like:
+                        </p>
+
+                        <div class="suggestions">
+
+                            <button class="suggestion">
+                                Summarize this document.
+                            </button>
+
+                            <button class="suggestion">
+                                What are the main topics?
+                            </button>
+
+                            <button class="suggestion">
+                                Explain this document.
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+
+                <input
+                    type="text"
+                    id="question-input"
+                    placeholder="Upload a resume to start chatting..."
+                    disabled
+                >
+
+                <button
+                    id="send-button"
+                    disabled>
+
+                    ➤
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+        <footer>
+
+            <p>
+                Built with FastAPI • LangChain • RAG • FAISS • Groq
+            </p>
+
+        </footer>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
+
+this code chnage the chat question change the asking normal question
