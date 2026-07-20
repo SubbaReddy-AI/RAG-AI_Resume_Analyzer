@@ -35,21 +35,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
-
-
 vector_store = None
-
 rag_chain = None
-
 
 
 
@@ -213,3 +200,14 @@ def ask_resume(
             status_code=500,
             detail=str(error)
         )
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://rag-ai-resume-analyzer-rag-air-esume.vercel.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
