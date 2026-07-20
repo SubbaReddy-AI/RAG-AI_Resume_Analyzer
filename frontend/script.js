@@ -6,7 +6,6 @@ const API_URL = "https://rag-ai-resume-fdxl.onrender.com";
 // =========================================
 // GET HTML ELEMENTS
 // =========================================
-
 const dropZone =
     document.getElementById(
         "drop-zone"
