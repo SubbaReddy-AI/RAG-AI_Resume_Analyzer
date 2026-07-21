@@ -1,3 +1,4 @@
+from backend.config import GOOGLE_API_KEY
 from pathlib import Path
 import shutil
 
@@ -70,13 +71,15 @@ class QuestionRequest(BaseModel):
 # Home Route
 # ===========================
 
-@app.get("/")
-def home():
-    return {
-        "message": "AI Resume RAG Assistant API is running"
-    }
+import google.generativeai as genai
 
-
+@app.get("/models")
+def list_models():
+    genai.configure(api_key=GOOGLE_API_KEY)
+    return [m.name for m in genai.list_models()]
+git add .
+git commit -m "Switch to Gemini embeddings"
+git push origin main
 # ===========================
 # Health Check
 # ===========================
