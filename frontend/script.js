@@ -102,62 +102,51 @@ let resumeUploaded = false;
 // CHECK FASTAPI CONNECTION
 // =========================================
 
+// =========================================
+// CHECK FASTAPI CONNECTION
+// =========================================
+
 async function checkAPI() {
 
     try {
 
-        const response =
-            await fetch(
-                `${API_URL}/`
-            );
-
+        const response = await fetch(
+            `${API_URL}/health`
+        );
 
         if (!response.ok) {
+            throw new Error("API connection failed");
+        }
 
-            throw new Error(
-                "API connection failed"
-            );
+        const data = await response.json();
+
+        if (data.status === "ok") {
+
+            apiStatus.textContent = "API Connected";
+
+            statusDot.classList.remove("disconnected");
+            statusDot.classList.add("connected");
+
+        } else {
+
+            throw new Error("Health check failed");
 
         }
 
-
-        apiStatus.textContent =
-            "API Connected";
-
-
-        statusDot.classList.add(
-            "connected"
-        );
-
-
-        statusDot.classList.remove(
-            "disconnected"
-        );
-
-
     } catch (error) {
 
-        apiStatus.textContent =
-            "API Disconnected";
+        console.error(error);
 
+        apiStatus.textContent = "API Disconnected";
 
-        statusDot.classList.add(
-            "disconnected"
-        );
-
-
-        statusDot.classList.remove(
-            "connected"
-        );
+        statusDot.classList.remove("connected");
+        statusDot.classList.add("disconnected");
 
     }
 
 }
 
-
-// Check API when page loads
 checkAPI();
-
 
 // =========================================
 // CLICK DROP ZONE
