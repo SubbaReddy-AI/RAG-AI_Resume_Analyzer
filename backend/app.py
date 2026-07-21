@@ -1,4 +1,4 @@
-from backend.config import GOOGLE_API_KEY
+
 from pathlib import Path
 import shutil
 
@@ -12,7 +12,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from config import UPLOAD_DIR
+from config import GOOGLE_API_KEY, UPLOAD_DIR
 from document_loader import load_pdf
 from text_splitter import split_documents
 from vector_store import (
@@ -77,9 +77,6 @@ import google.generativeai as genai
 def list_models():
     genai.configure(api_key=GOOGLE_API_KEY)
     return [m.name for m in genai.list_models()]
-git add .
-git commit -m "Switch to Gemini embeddings"
-git push origin main
 # ===========================
 # Health Check
 # ===========================
