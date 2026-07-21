@@ -1,22 +1,20 @@
 from langchain_huggingface import HuggingFaceEmbeddings
-
 from config import EMBEDDING_MODEL
 
+embeddings = None
 
 def get_embedding_model():
-    """
-    Create and return the Hugging Face
-    embedding model.
-    """
+    global embeddings
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={
-            "device": "cpu"
-        },
-        encode_kwargs={
-            "normalize_embeddings": True
-        }
-    )
+    if embeddings is None:
+        embeddings = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={
+                "device": "cpu"
+            },
+            encode_kwargs={
+                "normalize_embeddings": True
+            }
+        )
 
     return embeddings
