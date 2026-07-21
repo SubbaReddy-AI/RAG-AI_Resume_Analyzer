@@ -34,10 +34,16 @@ client = Groq(api_key=GROQ_API_KEY)
 # CORS
 # ===========================
 
+# ✅ NEW CORS CODE
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For production, replace "*" with your frontend URL
-    allow_credentials=False,
+    allow_origins=[
+        "https://rag-ai-resume-analyzer.vercel.app",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "*"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
