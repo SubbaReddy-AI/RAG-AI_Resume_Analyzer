@@ -2,7 +2,7 @@
 // FASTAPI URL
 // =========================================
 
-const API_URL = "https://rag-ai-resume-analyzers.onrender.com\models";
+const API_URL = "https://rag-ai-resume-analyzers.onrender.com";
 // =========================================
 // GET HTML ELEMENTS
 // =========================================
@@ -105,45 +105,25 @@ let resumeUploaded = false;
 // =========================================
 // CHECK FASTAPI CONNECTION
 // =========================================
-
 async function checkAPI() {
-
     try {
-
-        const response = await fetch(
-            `${API_URL}/health`
-        );
+        const response = await fetch("https://rag-ai-resume-analyzers.onrender.com/health");
 
         if (!response.ok) {
             throw new Error("API connection failed");
         }
 
-        const data = await response.json();
-
-        if (data.status === "ok") {
-
-            apiStatus.textContent = "API Connected";
-
-            statusDot.classList.remove("disconnected");
-            statusDot.classList.add("connected");
-
-        } else {
-
-            throw new Error("Health check failed");
-
-        }
+        apiStatus.textContent = "API Connected";
+        statusDot.classList.add("connected");
+        statusDot.classList.remove("disconnected");
 
     } catch (error) {
-
         console.error(error);
 
         apiStatus.textContent = "API Disconnected";
-
-        statusDot.classList.remove("connected");
         statusDot.classList.add("disconnected");
-
+        statusDot.classList.remove("connected");
     }
-
 }
 
 checkAPI();
