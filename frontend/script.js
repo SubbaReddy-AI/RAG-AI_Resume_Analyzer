@@ -2,7 +2,7 @@
 // FASTAPI URL
 // =========================================
 
-const API_URL = "https://rag-ai-resume-fdxl.onrender.com";
+const API_URL = "https://rag-ai-resume-analyzers.onrender.com";
 // =========================================
 // GET HTML ELEMENTS
 // =========================================
