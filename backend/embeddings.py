@@ -1,20 +1,17 @@
-from langchain_huggingface import HuggingFaceEmbeddings
-from config import EMBEDDING_MODEL
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-embeddings = None
+from config import GOOGLE_API_KEY
+
+embedding_model = None
+
 
 def get_embedding_model():
-    global embeddings
+    global embedding_model
 
-    if embeddings is None:
-        embeddings = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            model_kwargs={
-                "device": "cpu"
-            },
-            encode_kwargs={
-                "normalize_embeddings": True
-            }
+    if embedding_model is None:
+        embedding_model = GoogleGenerativeAIEmbeddings(
+            model="models/embedding-001",
+            google_api_key=GOOGLE_API_KEY
         )
 
-    return embeddings
+    return embedding_model

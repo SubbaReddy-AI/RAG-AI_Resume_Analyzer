@@ -7,7 +7,6 @@ langchain
 langchain-core
 langchain-community
 langchain-text-splitters
-langchain-huggingface
-langchain-groq
-sentence-transformers
 faiss-cpu
+langchain-google-genai
+google-generativeai
