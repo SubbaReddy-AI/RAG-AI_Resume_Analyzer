@@ -1,4 +1,5 @@
 
+from langchain_openai import ChatOpenAI
 from pathlib import Path
 import shutil
 
@@ -12,7 +13,7 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from config import GOOGLE_API_KEY, UPLOAD_DIR
+from config import OPENAI_API_KEY, UPLOAD_DIR
 from document_loader import load_pdf
 from text_splitter import split_documents
 from vector_store import (
@@ -70,14 +71,16 @@ class QuestionRequest(BaseModel):
 # ===========================
 # Home Route
 # ===========================
+from openai import OpenAI
 
-import google.generativeai as genai
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 @app.get("/models")
 def list_models():
-    genai.configure(api_key=GOOGLE_API_KEY)
-    return [m.name for m in genai.list_models()]
-# ===========================
+    return {
+        "chat_model": "gpt-4o-mini",
+        "embedding_model": "text-embedding-3-small"
+    }
 # Health Check
 # ===========================
 
@@ -174,3 +177,5 @@ def ask_resume(request: QuestionRequest):
             status_code=500,
             detail=str(e)
         )
+        from langchain_openai import ChatOpenAI
+

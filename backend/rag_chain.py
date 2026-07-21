@@ -1,27 +1,26 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
 from config import (
-    GOOGLE_API_KEY,
+    OPENAI_API_KEY,
     LLM_MODEL
 )
 
 
 def get_llm():
 
-    if not GOOGLE_API_KEY:
+    if not OPENAI_API_KEY:
         raise ValueError(
-            "GOOGLE_API_KEY is missing."
+            "OPENAI_API_KEY is missing."
         )
 
-    llm = ChatGoogleGenerativeAI(
+    llm = ChatOpenAI(
         model=LLM_MODEL,
-        google_api_key=GOOGLE_API_KEY,
+        api_key=OPENAI_API_KEY,
         temperature=0
     )
 
     return llm
-
 
 def create_rag_chain(retriever):
 
