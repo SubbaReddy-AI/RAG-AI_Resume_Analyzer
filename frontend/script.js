@@ -1,7 +1,11 @@
 // =========================================
-// FASTAPI URL
+// FASTAPI URL CONFIGURATION
 // =========================================
-const API_URL = "http://localhost:8000";
+// Uses localhost when testing on your machine, and your Render backend when live
+const API_URL =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+        ? "http://localhost:8000"
+        : "https://rag-ai-resume-analyzer.onrender.com";
 
 // =========================================
 // GET HTML ELEMENTS
@@ -41,14 +45,18 @@ async function checkAPI() {
             throw new Error("API connection failed");
         }
 
-        apiStatus.textContent = "API Connected";
-        statusDot.classList.add("connected");
-        statusDot.classList.remove("disconnected");
+        if (apiStatus && statusDot) {
+            apiStatus.textContent = "API Connected";
+            statusDot.classList.add("connected");
+            statusDot.classList.remove("disconnected");
+        }
     } catch (error) {
-        console.error(error);
-        apiStatus.textContent = "API Disconnected";
-        statusDot.classList.add("disconnected");
-        statusDot.classList.remove("connected");
+        console.error("API Check Error:", error);
+        if (apiStatus && statusDot) {
+            apiStatus.textContent = "API Disconnected";
+            statusDot.classList.add("disconnected");
+            statusDot.classList.remove("connected");
+        }
     }
 }
 
@@ -57,31 +65,35 @@ checkAPI();
 // =========================================
 // DRAG & DROP & FILE SELECTION
 // =========================================
-dropZone.addEventListener("click", () => fileInput.click());
+if (dropZone) {
+    dropZone.addEventListener("click", () => fileInput.click());
 
-fileInput.addEventListener("change", () => {
-    if (fileInput.files.length > 0) {
-        handleFile(fileInput.files[0]);
-    }
-});
+    dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("drag-over");
+    });
 
-dropZone.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    dropZone.classList.add("drag-over");
-});
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("drag-over");
+    });
 
-dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("drag-over");
-});
+    dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("drag-over");
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            handleFile(file);
+        }
+    });
+}
 
-dropZone.addEventListener("drop", (event) => {
-    event.preventDefault();
-    dropZone.classList.remove("drag-over");
-    const file = event.dataTransfer.files[0];
-    if (file) {
-        handleFile(file);
-    }
-});
+if (fileInput) {
+    fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+            handleFile(fileInput.files[0]);
+        }
+    });
+}
 
 // =========================================
 // HANDLE SELECTED FILE
@@ -107,72 +119,76 @@ function formatFileSize(bytes) {
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
-removeFileButton.addEventListener("click", () => {
-    selectedFile = null;
-    fileInput.value = "";
-    fileInfo.classList.add("hidden");
-    uploadButton.disabled = true;
-    hideUploadMessage();
-});
+if (removeFileButton) {
+    removeFileButton.addEventListener("click", () => {
+        selectedFile = null;
+        fileInput.value = "";
+        fileInfo.classList.add("hidden");
+        uploadButton.disabled = true;
+        hideUploadMessage();
+    });
+}
 
 // =========================================
 // UPLOAD AND ANALYZE RESUME
 // =========================================
-uploadButton.addEventListener("click", async () => {
-    if (!selectedFile) return;
+if (uploadButton) {
+    uploadButton.addEventListener("click", async () => {
+        if (!selectedFile) return;
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+        const formData = new FormData();
+        formData.append("file", selectedFile);
 
-    // Show loading UI
-    analysisEmpty.classList.add("hidden");
-    analysisResult.classList.add("hidden");
-    analysisLoading.classList.remove("hidden");
+        // Show loading UI
+        analysisEmpty.classList.add("hidden");
+        analysisResult.classList.add("hidden");
+        analysisLoading.classList.remove("hidden");
 
-    uploadButton.disabled = true;
-    uploadButton.innerHTML = "<span>Analyzing...</span>";
+        uploadButton.disabled = true;
+        uploadButton.innerHTML = "<span>Analyzing...</span>";
 
-    try {
-        const response = await fetch(`${API_URL}/upload`, {
-            method: "POST",
-            body: formData,
-        });
+        try {
+            const response = await fetch(`${API_URL}/upload`, {
+                method: "POST",
+                body: formData,
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.detail || "Upload failed");
+            if (!response.ok) {
+                throw new Error(data.detail || "Upload failed");
+            }
+
+            // Hide loading and show results
+            analysisLoading.classList.add("hidden");
+            analysisResult.classList.remove("hidden");
+
+            // Format object responses cleanly if analysis is structured JSON
+            analysisResult.textContent =
+                typeof data.analysis === "object"
+                    ? JSON.stringify(data.analysis, null, 2)
+                    : data.analysis;
+
+            showUploadMessage("Resume analyzed successfully!", "success");
+
+            // Enable Chat Input
+            resumeUploaded = true;
+            questionInput.disabled = false;
+            sendButton.disabled = false;
+            questionInput.placeholder = "Ask something about your resume...";
+        } catch (error) {
+            analysisLoading.classList.add("hidden");
+            analysisEmpty.classList.remove("hidden");
+            showUploadMessage(error.message, "error");
+        } finally {
+            uploadButton.disabled = false;
+            uploadButton.innerHTML = `
+                <span>Analyze Resume</span>
+                <span>→</span>
+            `;
         }
-
-        // Hide loading and show results
-        analysisLoading.classList.add("hidden");
-        analysisResult.classList.remove("hidden");
-
-        // Format object responses cleanly if analysis is structured JSON
-        analysisResult.textContent =
-            typeof data.analysis === "object"
-                ? JSON.stringify(data.analysis, null, 2)
-                : data.analysis;
-
-        showUploadMessage("Resume analyzed successfully!", "success");
-
-        // Enable Chat Input
-        resumeUploaded = true;
-        questionInput.disabled = false;
-        sendButton.disabled = false;
-        questionInput.placeholder = "Ask something about your resume...";
-    } catch (error) {
-        analysisLoading.classList.add("hidden");
-        analysisEmpty.classList.remove("hidden");
-        showUploadMessage(error.message, "error");
-    } finally {
-        uploadButton.disabled = false;
-        uploadButton.innerHTML = `
-            <span>Analyze Resume</span>
-            <span>→</span>
-        `;
-    }
-});
+    });
+}
 
 // =========================================
 // CHAT FUNCTIONALITY
@@ -213,13 +229,17 @@ async function sendQuestion() {
     }
 }
 
-sendButton.addEventListener("click", sendQuestion);
+if (sendButton) {
+    sendButton.addEventListener("click", sendQuestion);
+}
 
-questionInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-        sendQuestion();
-    }
-});
+if (questionInput) {
+    questionInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            sendQuestion();
+        }
+    });
+}
 
 document.querySelectorAll(".suggestion").forEach((button) => {
     button.addEventListener("click", () => {
@@ -252,10 +272,12 @@ function addMessage(text, type) {
 }
 
 function showUploadMessage(text, type) {
+    if (!uploadMessage) return;
     uploadMessage.textContent = text;
     uploadMessage.className = `message ${type}`;
 }
 
 function hideUploadMessage() {
+    if (!uploadMessage) return;
     uploadMessage.className = "message hidden";
 }
