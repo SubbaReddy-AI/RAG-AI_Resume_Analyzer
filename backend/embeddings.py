@@ -1,4 +1,4 @@
-from backend.config import EMBEDDING_MODEL
+from config import EMBEDDING_MODEL
 from langchain_openai import OpenAIEmbeddings
 from config import OPENAI_API_KEY
 
