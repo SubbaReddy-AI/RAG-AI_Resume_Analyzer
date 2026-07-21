@@ -2,7 +2,7 @@
 // FASTAPI URL
 // =========================================
 
-const API_URL = "https://rag-ai-resume-analyzers.onrender.com";
+const API_URL = "https://rag-ai-resume-analyzers.onrender.com\models";
 // =========================================
 // GET HTML ELEMENTS
 // =========================================
@@ -327,7 +327,7 @@ function formatFileSize(bytes) {
         return (
             bytes / 1024
         ).toFixed(1)
-        + " KB";
+            + " KB";
 
     }
 
@@ -336,7 +336,7 @@ function formatFileSize(bytes) {
         bytes /
         (1024 * 1024)
     ).toFixed(1)
-    + " MB";
+        + " MB";
 
 }
 
@@ -615,7 +615,7 @@ async function sendQuestion() {
                 ".message-content"
             )
             .textContent =
-                data.answer;
+            data.answer;
 
 
     } catch (error) {
@@ -626,8 +626,8 @@ async function sendQuestion() {
                 ".message-content"
             )
             .textContent =
-                "Error: "
-                + error.message;
+            "Error: "
+            + error.message;
 
     } finally {
 
@@ -771,7 +771,7 @@ function addMessage(
             ".message-content"
         )
         .textContent =
-            text;
+        text;
 
 
     chatMessages.appendChild(
