@@ -1,31 +1,23 @@
-
-from langchain_openai import ChatOpenAI
-from pathlib import Path
 import shutil
+from pathlib import Path
 
-from fastapi import (
-    FastAPI,
-    UploadFile,
-    File,
-    HTTPException
-)
-
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from groq import Groq
+from langchain_groq import ChatGroq
 from pydantic import BaseModel
 
-from config import OPENAI_API_KEY, UPLOAD_DIR
+from config import BASE_DIR, GROQ_API_KEY, UPLOAD_DIR
 from document_loader import load_pdf
-from text_splitter import split_documents
-from vector_store import (
-    create_vector_store,
-    get_retriever
-)
 from rag_chain import create_rag_chain
 from resume_analyzer import analyze_resume
-
+from text_splitter import split_documents
+from vector_store import create_vector_store, get_retriever
 
 # ===========================
-# FastAPI App
+# FastAPI App Initialization
 # ===========================
 
 app = FastAPI(
@@ -34,6 +26,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Initialize Groq Client
+client = Groq(api_key=GROQ_API_KEY)
+
 
 # ===========================
 # CORS
@@ -41,15 +36,22 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*"
-        # For production, replace "*" with:
-        # "https://your-vercel-app.vercel.app"
-    ],
+    allow_origins=["*"],  # For production, replace "*" with your frontend URL
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ===========================
+# Static Files & Frontend Mounting
+# ===========================
+
+# Assumes index.html, style.css, script.js live in a 'frontend' directory
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
 # ===========================
@@ -61,7 +63,7 @@ rag_chain = None
 
 
 # ===========================
-# Request Model
+# Request Models
 # ===========================
 
 class QuestionRequest(BaseModel):
@@ -69,30 +71,37 @@ class QuestionRequest(BaseModel):
 
 
 # ===========================
-# Home Route
+# System Routes & Frontend Root
 # ===========================
-from openai import OpenAI
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+@app.get("/")
+def serve_frontend():
+    """Serves the main HTML page for the application."""
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {"message": "Frontend UI available. Place index.html inside the 'frontend' directory."}
+
 
 @app.get("/models")
 def list_models():
+    """Returns the models configured for text generation and embeddings."""
     return {
-        "chat_model": "gpt-4o-mini",
-        "embedding_model": "text-embedding-3-small"
+        "chat_model": "llama-3.1-8b-instant",
+        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
     }
-# Health Check
-# ===========================
+
 
 @app.get("/health")
 def health():
+    """Health check endpoint."""
     return {
         "status": "ok"
     }
 
 
 # ===========================
-# Upload Resume
+# Upload Resume Endpoint
 # ===========================
 
 @app.post("/upload")
@@ -101,7 +110,6 @@ async def upload_resume(file: UploadFile = File(...)):
     global rag_chain
 
     try:
-
         if not file.filename.lower().endswith(".pdf"):
             raise HTTPException(
                 status_code=400,
@@ -109,8 +117,10 @@ async def upload_resume(file: UploadFile = File(...)):
             )
 
         filename = Path(file.filename).name
-
         file_path = UPLOAD_DIR / filename
+
+        # Ensure upload directory exists
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -124,13 +134,9 @@ async def upload_resume(file: UploadFile = File(...)):
             )
 
         chunks = split_documents(documents)
-
         vector_store = create_vector_store(chunks)
-
         retriever = get_retriever(vector_store)
-
         rag_chain = create_rag_chain(retriever)
-
         analysis = analyze_resume(documents)
 
         return {
@@ -151,7 +157,7 @@ async def upload_resume(file: UploadFile = File(...)):
 
 
 # ===========================
-# Ask Questions
+# Ask Questions Endpoint
 # ===========================
 
 @app.post("/ask")
@@ -165,7 +171,12 @@ def ask_resume(request: QuestionRequest):
         )
 
     try:
-        answer = rag_chain(request.question)
+        # Handles both Runnable chain format (invoke) and standard function/chain calls
+        if hasattr(rag_chain, "invoke"):
+            response = rag_chain.invoke(request.question)
+            answer = response.content if hasattr(response, "content") else str(response)
+        else:
+            answer = rag_chain(request.question)
 
         return {
             "question": request.question,
@@ -177,5 +188,3 @@ def ask_resume(request: QuestionRequest):
             status_code=500,
             detail=str(e)
         )
-        from langchain_openai import ChatOpenAI
-
