@@ -37,29 +37,48 @@ let resumeUploaded = false;
 // =========================================
 // CHECK FASTAPI CONNECTION
 // =========================================
-async function checkAPI() {
-    try {
-        const response = await fetch(`${API_URL}/health`);
+// =========================================
+// CHECK FASTAPI CONNECTION (WITH RETRY LOGIC)
+// =========================================
+async function checkAPI(retries = 3, delay = 3000) {
+    if (apiStatus) apiStatus.textContent = "Connecting to API...";
+    
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(`${API_URL}/health`);
 
-        if (!response.ok) {
-            throw new Error("API connection failed");
-        }
+            if (!response.ok) {
+                throw new Error("API health check failed");
+            }
 
-        if (apiStatus && statusDot) {
-            apiStatus.textContent = "API Connected";
-            statusDot.classList.add("connected");
-            statusDot.classList.remove("disconnected");
+            // Connection Successful
+            if (apiStatus && statusDot) {
+                apiStatus.textContent = "API Connected";
+                statusDot.classList.add("connected");
+                statusDot.classList.remove("disconnected");
+            }
+            return; // Exit function on success
+
+        } catch (error) {
+            console.warn(`API Connection Attempt ${attempt} failed:`, error);
+            
+            if (attempt < retries) {
+                if (apiStatus) apiStatus.textContent = `Waking up server... (${attempt}/${retries})`;
+                // Wait before retrying
+                await new Promise((res) => setTimeout(res, delay));
+            }
         }
-    } catch (error) {
-        console.error("API Check Error:", error);
-        if (apiStatus && statusDot) {
-            apiStatus.textContent = "API Disconnected";
-            statusDot.classList.add("disconnected");
-            statusDot.classList.remove("connected");
-        }
+    }
+
+    // If all retries fail
+    if (apiStatus && statusDot) {
+        apiStatus.textContent = "API Disconnected";
+        statusDot.classList.add("disconnected");
+        statusDot.classList.remove("connected");
     }
 }
 
+// Call checkAPI when page loads
 checkAPI();
 
 // =========================================
