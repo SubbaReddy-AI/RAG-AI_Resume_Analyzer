@@ -8,7 +8,7 @@ const API_URL =
         : "https://rag-ai-resume-analyzer.onrender.com";
 
 // =========================================
-// GET HTML ELEMENTS
+// GET HTML ELEMENTS 
 // =========================================
 const dropZone = document.getElementById("drop-zone");
 const fileInput = document.getElementById("resume-file");

@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 python-dotenv
-pymupdf
+docling
 langchain
 langchain-core
 langchain-community

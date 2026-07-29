@@ -1,19 +1,15 @@
-from langchain_community.document_loaders import PyMuPDFLoader
+# pyrefly: ignore [missing-import]
+from docling.document_converter import DocumentConverter
+from langchain_core.documents import Document
 
+converter = DocumentConverter()
 
-def load_pdf(file_path: str):
-    """
-    Load a PDF file and return LangChain documents.
-    """
+def load_pdf(file_path):
+    result = converter.convert(file_path)
 
-    try:
-        loader = PyMuPDFLoader(file_path)
+    text = result.document.export_to_markdown()
 
-        documents = loader.load()
+    if not text.strip():
+        return []
 
-        return documents
-
-    except Exception as error:
-        raise Exception(
-            f"Error while reading PDF: {str(error)}"
-        )
+    return [Document(page_content=text)]
