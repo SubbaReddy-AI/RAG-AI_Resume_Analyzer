@@ -10,7 +10,7 @@ def get_llm():
 
     # Fixed: Using Llama 3.1 8B Instant instead of the embedding model string
     llm = ChatGroq(
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         api_key=GROQ_API_KEY,
         temperature=0
     )

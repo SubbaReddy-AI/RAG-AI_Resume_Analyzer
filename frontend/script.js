@@ -5,7 +5,7 @@
 const API_URL =
     window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
         ? "http://localhost:8000"
-        : "https://rag-ai-resume-analyzer.onrender.com";
+        : "https://activate-ahoy-had.ngrok-free.dev";
 
 // =========================================
 // GET HTML ELEMENTS 
@@ -42,7 +42,7 @@ let resumeUploaded = false;
 // =========================================
 async function checkAPI(retries = 3, delay = 3000) {
     if (apiStatus) apiStatus.textContent = "Connecting to API...";
-    
+
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             const response = await fetch(`${API_URL}/health`);
@@ -61,7 +61,7 @@ async function checkAPI(retries = 3, delay = 3000) {
 
         } catch (error) {
             console.warn(`API Connection Attempt ${attempt} failed:`, error);
-            
+
             if (attempt < retries) {
                 if (apiStatus) apiStatus.textContent = `Waking up server... (${attempt}/${retries})`;
                 // Wait before retrying

@@ -34,15 +34,16 @@ client = Groq(api_key=GROQ_API_KEY)
 # CORS
 # ===========================
 
-# ✅ NEW CORS CODE
+ORIGINS = [
+    "https://activate-ahoy-had.ngrok-free.dev",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "*"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://rag-ai-resume-analyzer.vercel.app",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "*"
-    ],
+    allow_origins=ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
