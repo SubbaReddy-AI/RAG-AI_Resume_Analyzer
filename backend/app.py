@@ -57,21 +57,13 @@ client = Groq(
 # CORS
 # ============================================================
 
-ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-
-    # Docker frontend
-    "http://localhost",
-    "http://127.0.0.1",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://rag-ai-resume-analyzer-xpsn.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -2,20 +2,17 @@
 // FASTAPI URL CONFIGURATION
 // =========================================
 
-// Local backend
-const LOCAL_BACKEND_URL = "http://localhost:8000";
+/// =========================================
+// FASTAPI URL CONFIGURATION
+// =========================================
 
-// Render backend
-// IMPORTANT:
-// Replace this with your actual Render backend URL.
-const RENDER_BACKEND_URL = "https://YOUR-BACKEND-NAME.onrender.com";
-
-// Automatically choose local or Render backend
 const API_URL =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1"
-        ? LOCAL_BACKEND_URL
-        : RENDER_BACKEND_URL;
+        ? "http://localhost:8000"
+        : "https://rag-ai-resume-analyzer-1.onrender.com";
+
+console.log("API URL:", API_URL);
 
 
 // =========================================
