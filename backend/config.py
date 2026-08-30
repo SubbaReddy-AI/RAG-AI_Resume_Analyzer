@@ -15,10 +15,10 @@ BASE_DIR = Path(__file__).resolve().parent
 # ENVIRONMENT
 # ============================================================
 
-# First try backend/.env
+# backend/.env
 BACKEND_ENV = BASE_DIR / ".env"
 
-# Then try project-root .env
+# project-root/.env
 ROOT_ENV = BASE_DIR.parent / ".env"
 
 if BACKEND_ENV.exists():
@@ -41,25 +41,15 @@ GROQ_LLM_MODEL_NAME = os.getenv(
 
 
 # ============================================================
-# EMBEDDING MODEL
-# ============================================================
-
-EMBEDDING_MODEL_NAME = os.getenv(
-    "EMBEDDING_MODEL_NAME",
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
-
-
-# Keep this alias because some files may import EMBEDDING_MODEL
-EMBEDDING_MODEL = EMBEDDING_MODEL_NAME
-
-
-# ============================================================
 # UPLOAD DIRECTORY
 # ============================================================
 
 UPLOAD_DIR = BASE_DIR / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+UPLOAD_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
 
 
 # ============================================================
@@ -67,7 +57,11 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
 
 VECTOR_DB_DIR = BASE_DIR / "vector_db"
-VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
+
+VECTOR_DB_DIR.mkdir(
+    parents=True,
+    exist_ok=True
+)
 
 
 # ============================================================
@@ -75,11 +69,17 @@ VECTOR_DB_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
 
 CHUNK_SIZE = int(
-    os.getenv("CHUNK_SIZE", "1000")
+    os.getenv(
+        "CHUNK_SIZE",
+        "1000"
+    )
 )
 
 CHUNK_OVERLAP = int(
-    os.getenv("CHUNK_OVERLAP", "200")
+    os.getenv(
+        "CHUNK_OVERLAP",
+        "200"
+    )
 )
 
 
@@ -95,18 +95,34 @@ if not GROQ_API_KEY:
 
 
 # ============================================================
-# CONFIG LOG
+# CONFIGURATION LOG
 # ============================================================
 
 print("=" * 60)
 print("CONFIGURATION LOADED")
 print("=" * 60)
-print(f"BASE_DIR              : {BASE_DIR}")
-print(f"GROQ API key          : Loaded")
-print(f"GROQ model            : {GROQ_LLM_MODEL_NAME}")
-print(f"Embedding model       : {EMBEDDING_MODEL_NAME}")
-print(f"Upload directory      : {UPLOAD_DIR}")
-print(f"Vector DB directory    : {VECTOR_DB_DIR}")
-print(f"Chunk size            : {CHUNK_SIZE}")
-print(f"Chunk overlap         : {CHUNK_OVERLAP}")
+
+print(f"BASE_DIR           : {BASE_DIR}")
+print("GROQ API key       : Loaded")
+print(
+    f"GROQ model         : "
+    f"{GROQ_LLM_MODEL_NAME}"
+)
+print(
+    f"Upload directory   : "
+    f"{UPLOAD_DIR}"
+)
+print(
+    f"Vector DB directory: "
+    f"{VECTOR_DB_DIR}"
+)
+print(
+    f"Chunk size         : "
+    f"{CHUNK_SIZE}"
+)
+print(
+    f"Chunk overlap      : "
+    f"{CHUNK_OVERLAP}"
+)
+
 print("=" * 60)

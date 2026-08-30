@@ -177,8 +177,7 @@ def list_models():
 
     return {
         "chat_model": GROQ_LLM_MODEL_NAME,
-        "embedding_model":
-            "sentence-transformers/all-MiniLM-L6-v2",
+        "embedding_model": "TF-IDF",
     }
 
 

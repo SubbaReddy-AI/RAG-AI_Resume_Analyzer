@@ -1,34 +1,46 @@
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 
-from config import GROQ_API_KEY
+from config import GROQ_API_KEY, GROQ_LLM_MODEL_NAME
 
 
 def get_llm():
-    if not GROQ_API_KEY:
-        raise ValueError("GROQ_API_KEY is missing.")
+    """
+    Create the Groq language model.
+    """
 
-    # Fixed: Using Llama 3.1 8B Instant instead of the embedding model string
-    llm = ChatGroq(
-        model="openai/gpt-oss-20b",
+    if not GROQ_API_KEY:
+        raise ValueError(
+            "GROQ_API_KEY is missing."
+        )
+
+    return ChatGroq(
+        model=GROQ_LLM_MODEL_NAME,
         api_key=GROQ_API_KEY,
         temperature=0
     )
 
-    return llm
-
 
 def create_rag_chain(retriever):
+    """
+    Create a lightweight RAG question-answering function.
+    """
+
     llm = get_llm()
 
     prompt = ChatPromptTemplate.from_template(
         """
 You are an AI Resume Assistant.
 
-Answer the user's question only using the resume context.
+Answer the user's question using ONLY the resume context provided below.
 
-If the answer is not present in the resume, say:
-"I could not find this information in the resume."
+Rules:
+1. Do not invent information.
+2. Do not use outside knowledge.
+3. If the answer is not available in the resume context, say:
+   "I could not find this information in the resume."
+4. Keep the answer clear and concise.
+5. If the question asks for a list, use bullet points.
 
 Resume Context:
 {context}
@@ -41,19 +53,64 @@ Answer:
     )
 
     def ask_question(question: str):
-        docs = retriever.invoke(question)
+        """
+        Retrieve relevant resume sections and ask Groq.
+        """
 
-        context = "\n\n".join(
-            doc.page_content for doc in docs
+        if not question or not question.strip():
+            return "Please enter a question."
+
+        # Retrieve relevant resume chunks
+        docs = retriever.invoke(
+            question.strip()
         )
 
+        if not docs:
+            return (
+                "I could not find this information "
+                "in the resume."
+            )
+
+        # Build context
+        context_parts = []
+
+        for doc in docs:
+            text = getattr(
+                doc,
+                "page_content",
+                ""
+            )
+
+            if text and text.strip():
+                context_parts.append(
+                    text.strip()
+                )
+
+        context = "\n\n---\n\n".join(
+            context_parts
+        )
+
+        if not context:
+            return (
+                "I could not find this information "
+                "in the resume."
+            )
+
+        # Create prompt messages
         messages = prompt.format_messages(
             context=context,
-            question=question
+            question=question.strip()
         )
 
+        # Call Groq
         response = llm.invoke(messages)
 
-        return response.content
+        answer = getattr(
+            response,
+            "content",
+            str(response)
+        )
+
+        return answer.strip()
 
     return ask_question

@@ -1,22 +1,27 @@
-from functools import lru_cache
-
-from langchain_community.embeddings import HuggingFaceEmbeddings
-
-from config import EMBEDDING_MODEL_NAME
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-@lru_cache(maxsize=1)
-def get_embedding_model():
+class TfidfEmbeddings:
     """
-    Load the embedding model once and reuse it.
+    Lightweight local embeddings using TF-IDF.
+    Does not require PyTorch, Transformers, or Sentence Transformers.
     """
 
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL_NAME,
-        model_kwargs={
-            "device": "cpu"
-        },
-        encode_kwargs={
-            "normalize_embeddings": True
-        }
-    )
+    def __init__(self):
+        self.vectorizer = TfidfVectorizer(
+            stop_words="english",
+            max_features=5000,
+            ngram_range=(1, 2)
+        )
+
+    def fit(self, texts):
+        self.vectorizer.fit(texts)
+        return self
+
+    def embed_documents(self, texts):
+        matrix = self.vectorizer.transform(texts)
+        return matrix.toarray().tolist()
+
+    def embed_query(self, text):
+        vector = self.vectorizer.transform([text])
+        return vector.toarray()[0].tolist()

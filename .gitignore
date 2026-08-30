@@ -16,4 +16,5 @@ uploads/
 vector_db/
 
 # VS Code
-.vscode/
+.vscode/.env
+backend/.env

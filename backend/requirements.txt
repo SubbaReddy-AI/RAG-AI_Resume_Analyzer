@@ -7,18 +7,10 @@ langchain
 langchain-community
 langchain-core
 langchain-groq
-
-faiss-cpu
-
-sentence-transformers
-transformers
-torch
-
+groq
+langchain-text-splitters
 pypdf
 pdfplumber
 
-rapidocr-onnxruntime
-onnxruntime
-
-groq
-docling
+scikit-learn
+numpy<2
