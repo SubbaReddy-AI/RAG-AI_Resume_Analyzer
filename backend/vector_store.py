@@ -23,8 +23,8 @@ def get_retriever(vector_store):
     return vector_store.as_retriever(
         search_type="mmr",  # Balances relevance and diversity
         search_kwargs={
-            "k": 4,           # Returns top 4 relevant chunks
-            "fetch_k": 10     # Evaluates top 10 candidates before selecting top 4
+            "k": 5,           # Returns top 5 relevant chunks
+            "fetch_k": 15     # Evaluates top 15 candidates before selecting top 5
         }
     )
 

@@ -1,17 +1,22 @@
-from langchain_huggingface import HuggingFaceEmbeddings
-from config import EMBEDDING_MODEL_NAME  # or use "sentence-transformers/all-MiniLM-L6-v2" directly
+from functools import lru_cache
 
-embedding_model = None
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+from config import EMBEDDING_MODEL_NAME
 
 
+@lru_cache(maxsize=1)
 def get_embedding_model():
-    global embedding_model
+    """
+    Load the embedding model once and reuse it.
+    """
 
-    if embedding_model is None:
-        # Runs sentence-transformers/all-MiniLM-L6-v2 locally (~90 MB)
-        # No API key required!
-        embedding_model = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-
-    return embedding_model
+    return HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL_NAME,
+        model_kwargs={
+            "device": "cpu"
+        },
+        encode_kwargs={
+            "normalize_embeddings": True
+        }
+    )
