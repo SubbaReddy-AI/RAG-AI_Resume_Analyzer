@@ -1,14 +1,27 @@
 // =========================================
 // FASTAPI URL CONFIGURATION
 // =========================================
-// Uses localhost when testing on your machine, and your Render backend when live
+
+// Local backend
+const LOCAL_BACKEND_URL = "http://localhost:8000";
+
+// Render backend
+// IMPORTANT:
+// Replace this with your actual Render backend URL.
+const RENDER_BACKEND_URL = "https://YOUR-BACKEND-NAME.onrender.com";
+
+// Automatically choose local or Render backend
 const API_URL =
-    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-        ? "http://localhost:8000"
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+        ? LOCAL_BACKEND_URL
+        : RENDER_BACKEND_URL;
+
 
 // =========================================
-// GET HTML ELEMENTS 
+// GET HTML ELEMENTS
 // =========================================
+
 const dropZone = document.getElementById("drop-zone");
 const fileInput = document.getElementById("resume-file");
 const fileInfo = document.getElementById("file-info");
@@ -29,273 +42,838 @@ const chatMessages = document.getElementById("chat-messages");
 const apiStatus = document.getElementById("api-status");
 const statusDot = document.getElementById("status-dot");
 
-// State Variables
+
+// =========================================
+// STATE VARIABLES
+// =========================================
+
 let selectedFile = null;
 let resumeUploaded = false;
+
 
 // =========================================
 // CHECK FASTAPI CONNECTION
 // =========================================
-// =========================================
-// CHECK FASTAPI CONNECTION (WITH RETRY LOGIC)
-// =========================================
+
 async function checkAPI(retries = 3, delay = 3000) {
-    if (apiStatus) apiStatus.textContent = "Connecting to API...";
+
+    if (apiStatus) {
+        apiStatus.textContent = "Connecting to API...";
+    }
+
+    if (statusDot) {
+        statusDot.classList.remove("connected");
+        statusDot.classList.remove("disconnected");
+    }
 
     for (let attempt = 1; attempt <= retries; attempt++) {
+
         try {
-            const response = await fetch(`${API_URL}/health`);
+
+            console.log(
+                `Checking API: ${API_URL}/health`
+            );
+
+            const response = await fetch(
+                `${API_URL}/health`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                }
+            );
 
             if (!response.ok) {
-                throw new Error("API health check failed");
+                throw new Error(
+                    `API returned status ${response.status}`
+                );
             }
 
-            // Connection Successful
-            if (apiStatus && statusDot) {
+            const data = await response.json().catch(() => ({}));
+
+            console.log("API connected:", data);
+
+            if (apiStatus) {
                 apiStatus.textContent = "API Connected";
+            }
+
+            if (statusDot) {
                 statusDot.classList.add("connected");
                 statusDot.classList.remove("disconnected");
             }
-            return; // Exit function on success
+
+            return true;
 
         } catch (error) {
-            console.warn(`API Connection Attempt ${attempt} failed:`, error);
+
+            console.warn(
+                `API Connection Attempt ${attempt} failed:`,
+                error
+            );
 
             if (attempt < retries) {
-                if (apiStatus) apiStatus.textContent = `Waking up server... (${attempt}/${retries})`;
-                // Wait before retrying
-                await new Promise((res) => setTimeout(res, delay));
+
+                if (apiStatus) {
+                    apiStatus.textContent =
+                        `Waking up server... (${attempt}/${retries})`;
+                }
+
+                await new Promise(
+                    resolve => setTimeout(resolve, delay)
+                );
             }
         }
     }
 
-    // If all retries fail
-    if (apiStatus && statusDot) {
+    if (apiStatus) {
         apiStatus.textContent = "API Disconnected";
+    }
+
+    if (statusDot) {
         statusDot.classList.add("disconnected");
         statusDot.classList.remove("connected");
     }
+
+    console.error(
+        "Could not connect to FastAPI:",
+        `${API_URL}/health`
+    );
+
+    return false;
 }
 
-// Call checkAPI when page loads
-checkAPI();
 
 // =========================================
-// DRAG & DROP & FILE SELECTION
+// PAGE LOAD
 // =========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    console.log("Frontend loaded");
+    console.log("API URL:", API_URL);
+
+    checkAPI();
+
+});
+
+
+// =========================================
+// DRAG & DROP
+// =========================================
+
 if (dropZone) {
-    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("click", () => {
+
+        if (fileInput) {
+            fileInput.click();
+        }
+
+    });
+
 
     dropZone.addEventListener("dragover", (event) => {
+
         event.preventDefault();
+
         dropZone.classList.add("drag-over");
+
     });
+
 
     dropZone.addEventListener("dragleave", () => {
+
         dropZone.classList.remove("drag-over");
+
     });
 
+
     dropZone.addEventListener("drop", (event) => {
+
         event.preventDefault();
+
         dropZone.classList.remove("drag-over");
+
         const file = event.dataTransfer.files[0];
+
         if (file) {
             handleFile(file);
         }
+
     });
+
 }
 
+
+// =========================================
+// FILE INPUT
+// =========================================
+
 if (fileInput) {
+
     fileInput.addEventListener("change", () => {
+
         if (fileInput.files.length > 0) {
-            handleFile(fileInput.files[0]);
+
+            handleFile(
+                fileInput.files[0]
+            );
+
         }
+
     });
+
 }
+
 
 // =========================================
 // HANDLE SELECTED FILE
 // =========================================
+
 function handleFile(file) {
-    if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
-        showUploadMessage("Please select a valid PDF file.", "error");
+
+    if (
+        file.type !== "application/pdf" &&
+        !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+
+        showUploadMessage(
+            "Please select a valid PDF file.",
+            "error"
+        );
+
         return;
     }
 
-    selectedFile = file;
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
 
-    fileInfo.classList.remove("hidden");
-    uploadButton.disabled = false;
+    selectedFile = file;
+
+
+    if (fileName) {
+        fileName.textContent = file.name;
+    }
+
+
+    if (fileSize) {
+        fileSize.textContent =
+            formatFileSize(file.size);
+    }
+
+
+    if (fileInfo) {
+        fileInfo.classList.remove("hidden");
+    }
+
+
+    if (uploadButton) {
+        uploadButton.disabled = false;
+    }
+
+
     hideUploadMessage();
+
 }
+
+
+// =========================================
+// FORMAT FILE SIZE
+// =========================================
 
 function formatFileSize(bytes) {
-    if (bytes < 1024) return `${bytes} Bytes`;
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+
+    if (bytes < 1024) {
+
+        return `${bytes} Bytes`;
+
+    }
+
+
+    if (bytes < 1024 * 1024) {
+
+        return (
+            (bytes / 1024).toFixed(1) +
+            " KB"
+        );
+
+    }
+
+
+    return (
+        (bytes / (1024 * 1024)).toFixed(1) +
+        " MB"
+    );
+
 }
 
+
+// =========================================
+// REMOVE FILE
+// =========================================
+
 if (removeFileButton) {
-    removeFileButton.addEventListener("click", () => {
-        selectedFile = null;
-        fileInput.value = "";
-        fileInfo.classList.add("hidden");
-        uploadButton.disabled = true;
-        hideUploadMessage();
-    });
+
+    removeFileButton.addEventListener(
+        "click",
+        () => {
+
+            selectedFile = null;
+
+            if (fileInput) {
+                fileInput.value = "";
+            }
+
+            if (fileInfo) {
+                fileInfo.classList.add("hidden");
+            }
+
+            if (uploadButton) {
+                uploadButton.disabled = true;
+            }
+
+            hideUploadMessage();
+
+        }
+    );
+
 }
+
 
 // =========================================
 // UPLOAD AND ANALYZE RESUME
 // =========================================
+
 if (uploadButton) {
-    uploadButton.addEventListener("click", async () => {
-        if (!selectedFile) return;
 
-        const formData = new FormData();
-        formData.append("file", selectedFile);
+    uploadButton.addEventListener(
+        "click",
+        async () => {
 
-        // Show loading UI
-        analysisEmpty.classList.add("hidden");
-        analysisResult.classList.add("hidden");
-        analysisLoading.classList.remove("hidden");
+            if (!selectedFile) {
 
-        uploadButton.disabled = true;
-        uploadButton.innerHTML = "<span>Analyzing...</span>";
+                showUploadMessage(
+                    "Please select a PDF resume first.",
+                    "error"
+                );
 
-        try {
-            const response = await fetch(`${API_URL}/upload`, {
-                method: "POST",
-                body: formData,
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.detail || "Upload failed");
+                return;
             }
 
-            // Hide loading and show results
-            analysisLoading.classList.add("hidden");
-            analysisResult.classList.remove("hidden");
 
-            // Format object responses cleanly if analysis is structured JSON
-            analysisResult.textContent =
-                typeof data.analysis === "object"
-                    ? JSON.stringify(data.analysis, null, 2)
-                    : data.analysis;
+            const formData = new FormData();
 
-            showUploadMessage("Resume analyzed successfully!", "success");
+            formData.append(
+                "file",
+                selectedFile
+            );
 
-            // Enable Chat Input
-            resumeUploaded = true;
-            questionInput.disabled = false;
-            sendButton.disabled = false;
-            questionInput.placeholder = "Ask something about your resume...";
-        } catch (error) {
-            analysisLoading.classList.add("hidden");
-            analysisEmpty.classList.remove("hidden");
-            showUploadMessage(error.message, "error");
-        } finally {
-            uploadButton.disabled = false;
-            uploadButton.innerHTML = `
-                <span>Analyze Resume</span>
-                <span>→</span>
-            `;
+
+            // Show loading UI
+
+            if (analysisEmpty) {
+                analysisEmpty.classList.add("hidden");
+            }
+
+            if (analysisResult) {
+                analysisResult.classList.add("hidden");
+            }
+
+            if (analysisLoading) {
+                analysisLoading.classList.remove("hidden");
+            }
+
+
+            uploadButton.disabled = true;
+
+            uploadButton.innerHTML =
+                "<span>Analyzing...</span>";
+
+
+            try {
+
+                console.log(
+                    "Uploading resume to:",
+                    `${API_URL}/upload`
+                );
+
+
+                const response = await fetch(
+                    `${API_URL}/upload`,
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+                const data =
+                    await response.json()
+                        .catch(() => ({}));
+
+
+                console.log(
+                    "Upload response:",
+                    data
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.detail ||
+                        `Upload failed (${response.status})`
+                    );
+
+                }
+
+
+                // Hide loading
+
+                if (analysisLoading) {
+                    analysisLoading.classList.add("hidden");
+                }
+
+
+                // Show result
+
+                if (analysisResult) {
+
+                    analysisResult.classList.remove(
+                        "hidden"
+                    );
+
+
+                    analysisResult.textContent =
+                        typeof data.analysis === "object"
+                            ? JSON.stringify(
+                                data.analysis,
+                                null,
+                                2
+                            )
+                            : (
+                                data.analysis ||
+                                "Analysis completed successfully."
+                            );
+
+                }
+
+
+                showUploadMessage(
+                    "Resume analyzed successfully!",
+                    "success"
+                );
+
+
+                // Enable chat
+
+                resumeUploaded = true;
+
+
+                if (questionInput) {
+
+                    questionInput.disabled = false;
+
+                    questionInput.placeholder =
+                        "Ask something about your resume...";
+
+                }
+
+
+                if (sendButton) {
+                    sendButton.disabled = false;
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Resume upload error:",
+                    error
+                );
+
+
+                if (analysisLoading) {
+                    analysisLoading.classList.add(
+                        "hidden"
+                    );
+                }
+
+
+                if (analysisEmpty) {
+                    analysisEmpty.classList.remove(
+                        "hidden"
+                    );
+                }
+
+
+                showUploadMessage(
+                    error.message ||
+                    "Failed to analyze resume.",
+                    "error"
+                );
+
+
+            } finally {
+
+                uploadButton.disabled = false;
+
+                uploadButton.innerHTML = `
+                    <span>Analyze Resume</span>
+                    <span>→</span>
+                `;
+
+            }
+
         }
-    });
+    );
+
 }
+
 
 // =========================================
 // CHAT FUNCTIONALITY
 // =========================================
+
 async function sendQuestion() {
-    const question = questionInput.value.trim();
 
-    if (!question || !resumeUploaded) return;
+    if (!questionInput) {
+        return;
+    }
 
-    addMessage(question, "user");
+
+    const question =
+        questionInput.value.trim();
+
+
+    if (!question) {
+        return;
+    }
+
+
+    if (!resumeUploaded) {
+
+        addMessage(
+            "Please upload and analyze your resume first.",
+            "ai"
+        );
+
+        return;
+    }
+
+
+    // Add user message
+
+    addMessage(
+        question,
+        "user"
+    );
+
+
     questionInput.value = "";
-    sendButton.disabled = true;
 
-    const loadingMessage = addMessage("Thinking...", "ai");
+
+    if (sendButton) {
+        sendButton.disabled = true;
+    }
+
+
+    const loadingMessage =
+        addMessage(
+            "Thinking...",
+            "ai"
+        );
+
 
     try {
-        const response = await fetch(`${API_URL}/ask`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ question }),
-        });
 
-        const data = await response.json();
+        console.log(
+            "Sending question to:",
+            `${API_URL}/ask`
+        );
+
+
+        const response =
+            await fetch(
+                `${API_URL}/ask`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        question: question
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json()
+                .catch(() => ({}));
+
+
+        console.log(
+            "Question response:",
+            data
+        );
+
 
         if (!response.ok) {
-            throw new Error(data.detail || "Failed to get answer");
+
+            throw new Error(
+                data.detail ||
+                `Failed to get answer (${response.status})`
+            );
+
         }
 
-        loadingMessage.querySelector(".message-content").textContent = data.answer;
+
+        const answer =
+            data.answer ||
+            "No answer received from the API.";
+
+
+        if (loadingMessage) {
+
+            const content =
+                loadingMessage.querySelector(
+                    ".message-content"
+                );
+
+
+            if (content) {
+                content.textContent = answer;
+            }
+
+        }
+
+
     } catch (error) {
-        loadingMessage.querySelector(".message-content").textContent =
-            "Error: " + error.message;
+
+        console.error(
+            "Question error:",
+            error
+        );
+
+
+        if (loadingMessage) {
+
+            const content =
+                loadingMessage.querySelector(
+                    ".message-content"
+                );
+
+
+            if (content) {
+
+                content.textContent =
+                    "Error: " +
+                    error.message;
+
+            }
+
+        }
+
     } finally {
-        sendButton.disabled = false;
+
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
+
+
         questionInput.focus();
+
     }
+
 }
+
+
+// =========================================
+// SEND BUTTON
+// =========================================
 
 if (sendButton) {
-    sendButton.addEventListener("click", sendQuestion);
+
+    sendButton.addEventListener(
+        "click",
+        sendQuestion
+    );
+
 }
+
+
+// =========================================
+// ENTER KEY
+// =========================================
 
 if (questionInput) {
-    questionInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-            sendQuestion();
+
+    questionInput.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                sendQuestion();
+
+            }
+
         }
-    });
+    );
+
 }
 
-document.querySelectorAll(".suggestion").forEach((button) => {
-    button.addEventListener("click", () => {
-        if (!resumeUploaded) return;
-        questionInput.value = button.textContent.trim();
-        sendQuestion();
+
+// =========================================
+// SUGGESTION BUTTONS
+// =========================================
+
+document
+    .querySelectorAll(".suggestion")
+    .forEach((button) => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                if (!resumeUploaded) {
+
+                    addMessage(
+                        "Please upload and analyze your resume first.",
+                        "ai"
+                    );
+
+                    return;
+                }
+
+
+                if (!questionInput) {
+                    return;
+                }
+
+
+                questionInput.value =
+                    button.textContent.trim();
+
+
+                sendQuestion();
+
+            }
+        );
+
     });
-});
+
 
 // =========================================
-// CHAT MESSAGE HELPERS
+// CHAT MESSAGE HELPER
 // =========================================
+
 function addMessage(text, type) {
-    const message = document.createElement("div");
-    message.classList.add("chat-message");
-    message.classList.add(type === "user" ? "user-message" : "ai-message");
 
-    const avatar = type === "user" ? "YOU" : "AI";
+    if (!chatMessages) {
+        return null;
+    }
+
+
+    const message =
+        document.createElement("div");
+
+
+    message.classList.add(
+        "chat-message"
+    );
+
+
+    message.classList.add(
+        type === "user"
+            ? "user-message"
+            : "ai-message"
+    );
+
+
+    const avatar =
+        type === "user"
+            ? "YOU"
+            : "AI";
+
 
     message.innerHTML = `
-        <div class="message-avatar">${avatar}</div>
+        <div class="message-avatar">
+            ${avatar}
+        </div>
+
         <div class="message-content"></div>
     `;
 
-    message.querySelector(".message-content").textContent = text;
-    chatMessages.appendChild(message);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    const content =
+        message.querySelector(
+            ".message-content"
+        );
+
+
+    if (content) {
+        content.textContent = text;
+    }
+
+
+    chatMessages.appendChild(
+        message
+    );
+
+
+    chatMessages.scrollTop =
+        chatMessages.scrollHeight;
+
 
     return message;
+
 }
 
-function showUploadMessage(text, type) {
-    if (!uploadMessage) return;
-    uploadMessage.textContent = text;
-    uploadMessage.className = `message ${type}`;
+
+// =========================================
+// UPLOAD MESSAGE
+// =========================================
+
+function showUploadMessage(
+    text,
+    type
+) {
+
+    if (!uploadMessage) {
+        return;
+    }
+
+
+    uploadMessage.textContent =
+        text;
+
+
+    uploadMessage.className =
+        `message ${type}`;
+
 }
+
 
 function hideUploadMessage() {
-    if (!uploadMessage) return;
-    uploadMessage.className = "message hidden";
+
+    if (!uploadMessage) {
+        return;
+    }
+
+
+    uploadMessage.className =
+        "message hidden";
+
 }
